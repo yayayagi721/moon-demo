@@ -16,6 +16,7 @@ module.exports = {
   },
 
   module: {
+    unknownContextCritical: false,
     rules: [
       {
         test: /\.ts$/,
@@ -51,6 +52,7 @@ module.exports = {
           },
         ],
       },
+      { test: /\.(png|tif)$/, use: "url-loader" },
     ],
   },
   plugins: [

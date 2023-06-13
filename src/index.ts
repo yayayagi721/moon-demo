@@ -1,81 +1,154 @@
 import "./style.scss";
-import fragmentShader from "./shader/fragmentShader.glsl";
-import vertexShader from "./shader/vertexShader.glsl";
+
+import { initMoonDEMData } from "./demRepository";
+
+import * as dat from "lil-gui";
 
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { Planet } from "./planet";
+
+const initUniforms = () => {
+
+	const gui = new dat.GUI( { width: 300 } );
+
+	const colors = {
+		depthColor: "#000000",
+		surfaceColor: "#cfe1ec",
+	};
+
+	const uniforms = {
+		uDepthColor: { value: new THREE.Color( colors.depthColor ) },
+		uSurfaceColor: { value: new THREE.Color( colors.surfaceColor ) },
+		uColorOffset: { value: 0.03 },
+		uColorMultiplier: { value: 9.0 },
+		uHeightCoefficient: { value: 0.15 },
+	};
+
+	gui
+		.add( uniforms.uColorOffset, "value" )
+		.min( 0 )
+		.max( 1 )
+		.step( 0.001 )
+		.name( "uColorOffset" );
+
+	gui
+		.add( uniforms.uColorMultiplier, "value" )
+		.min( 0 )
+		.max( 10 )
+		.step( 0.001 )
+		.name( "uColorMultiplier" );
+
+	gui
+		.add( uniforms.uHeightCoefficient, "value" )
+		.min( 0 )
+		.max( 2 )
+		.step( 0.001 )
+		.name( "uColorMultiplier" );
+
+	gui.addColor( colors, "depthColor" ).onChange( () => {
+
+		uniforms.uDepthColor.value.set( colors.depthColor );
+
+	} );
+
+	gui.addColor( colors, "surfaceColor" ).onChange( () => {
+
+		uniforms.uSurfaceColor.value.set( colors.surfaceColor );
+
+	} );
+
+	gui.show( true );
+
+	return uniforms;
+
+};
 
 const main = async () => {
-  const sizes = {
-    width: window.innerWidth,
-    height: window.innerHeight,
-  };
 
-  const canvas = document.querySelector(".webgl");
+	const sizes = {
+		width: window.innerWidth,
+		height: window.innerHeight,
+	};
 
-  const renderer = new THREE.WebGLRenderer({
-    antialising: true,
-    alpha: false,
-    canvas: canvas,
-  });
+	const canvas = document.querySelector( ".webgl" );
 
-  const camera = new THREE.PerspectiveCamera(
-    45,
-    sizes.width / sizes.height,
-    0.1,
-    1000
-  );
-  const scene = new THREE.Scene();
+	const renderer = new THREE.WebGLRenderer( {
+		antialising: true,
+		alpha: false,
+		canvas: canvas,
+	} );
 
-  const uniforms = {
-    uTime: { value: 0 },
-  };
-  uniforms.uTime.value;
+	renderer.shadowMap.enabled = true;
 
-  const geometry = new THREE.SphereGeometry(1, 128, 64);
-  const material = new THREE.ShaderMaterial({
-    uniforms: uniforms,
-    vertexShader: vertexShader,
-    fragmentShader: fragmentShader,
-  });
-  const sphere = new THREE.Mesh(geometry, material);
-  scene.add(sphere);
+	const camera = new THREE.PerspectiveCamera(
+		45,
+		sizes.width / sizes.height,
+		0.1,
+		1000
+	);
 
-  const ambientLight = new THREE.AmbientLight("#fff", 1);
+	camera.position.set( 0, 0, 2 );
+	const scene = new THREE.Scene();
 
-  window.addEventListener("resize", () => {
-    sizes.width = window.innerWidth;
-    sizes.height = window.innerHeight;
+	scene.background = new THREE.Color( "#FFFFFF" );
 
-    camera.aspect = sizes.width / sizes.height;
-    camera.updateProjectionMatrix();
+	await initMoonDEMData();
+	const uniforms = initUniforms();
 
-    renderer.setSize(sizes.width, sizes.height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  });
+	window.addEventListener( "resize", () => {
 
-  // Controls
-  const controls = new OrbitControls(camera, canvas);
-  controls.enableDamping = true;
+		sizes.width = window.innerWidth;
+		sizes.height = window.innerHeight;
 
-  renderer.setPixelRatio(window.devicePixelRatio);
-  renderer.setSize(sizes.width, sizes.height);
+		camera.aspect = sizes.width / sizes.height;
+		camera.updateProjectionMatrix();
 
-  camera.position.z = 4;
+		renderer.setSize( sizes.width, sizes.height );
+		renderer.setPixelRatio( Math.min( window.devicePixelRatio, 2 ) );
 
-  scene.add(ambientLight);
+	} );
 
-  const clock = new THREE.Clock();
+	const planet = new Planet( 100 );
+	const meshes = await planet.initialize( uniforms );
 
-  const update = () => {
-    const time = clock.getElapsedTime();
-    uniforms.uTime.value = time;
+	meshes.forEach( ( mesh ) => {
 
-    renderer.render(scene, camera);
-    requestAnimationFrame(update);
-  };
+		scene.add( mesh );
+		console.log( mesh );
 
-  requestAnimationFrame(update);
+	} );
+
+	const dir = new THREE.Vector3( 0, 0, 3 );
+
+	//normalize the direction vector (convert to vector of length 1)
+	dir.normalize();
+
+	const origin = new THREE.Vector3( 0, 0, 0 );
+	const length = 1;
+	const hex = 0xff0000;
+
+	const arrowHelper = new THREE.ArrowHelper( dir, origin, length, hex );
+	scene.add( arrowHelper );
+
+	// Controls
+	const controls = new OrbitControls( camera, canvas );
+	controls.enableDamping = true;
+
+	renderer.setPixelRatio( window.devicePixelRatio );
+	renderer.setSize( sizes.width, sizes.height );
+
+	camera.position.z = 4;
+
+	const update = () => {
+
+		renderer.render( scene, camera );
+		requestAnimationFrame( update );
+
+	};
+
+	requestAnimationFrame( update );
+
 };
 
 main();
