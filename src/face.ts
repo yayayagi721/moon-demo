@@ -141,6 +141,14 @@ export class Face {
 		//
 		geometry.setAttribute( "dem", new THREE.BufferAttribute( normals, 3 ) );
 
+		geometry.addAttribute( 'uv', new THREE.BufferAttribute( uvs, 2 ) );
+		geometry.setIndex( new THREE.BufferAttribute( indices, 1 ) );
+
+		// Load the texture asynchronously
+		const sprite = new THREE.TextureLoader().load( '../assets/img/new-1.jpg' );
+
+		var material = new THREE.MeshBasicMaterial( { map: sprite } );
+
 		return geometry;
 
 	}

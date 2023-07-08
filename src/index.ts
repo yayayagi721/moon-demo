@@ -1,11 +1,13 @@
 import "./style.scss";
 
 import { initMoonDEMData } from "./demRepository";
+import { saveAs } from "file-saver";
 
 import * as dat from "lil-gui";
 
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 import { Planet } from "./planet";
 
 const initUniforms = () => {
@@ -60,7 +62,7 @@ const initUniforms = () => {
 
 	gui.show( true );
 
-	return uniforms;
+	return [ uniforms, gui ];
 
 };
 
@@ -91,10 +93,70 @@ const main = async () => {
 	camera.position.set( 0, 0, 2 );
 	const scene = new THREE.Scene();
 
+	// Instantiate a exporter
+	const exporter = new GLTFExporter();
+
+	console.log( exporter );
+
+
+	const link = document.createElement( 'a' );
+	link.style.display = 'none';
+	document.body.appendChild( link );
+
+	function save( blob, filename ) {
+
+		link.href = URL.createObjectURL( blob );
+		link.download = filename;
+		link.click();
+
+	}
+
+	const saveArrayBuffer = ( buffer, filename ) =>{
+
+		save( new Blob( [ buffer ], { type: 'application/octet-stream' } ), filename );
+
+	};
+
+	const obj = {
+		myFunction: () => {
+
+			// Parse the input and generate the glTF output
+			const buffer = exporter.parse(
+				scene,
+				// called when the gltf has been generated
+				function ( gltf ) {
+
+					console.log( gltf );
+					if ( gltf instanceof ArrayBuffer ) {
+
+					  saveArrayBuffer( gltf, "mesh.glb" );
+
+					}
+
+				},
+				// called when there is an error in the generation
+				function ( error ) {
+
+					console.log( 'An error happened' );
+
+				},
+				{ trs: true,
+					binary: true, }
+			);
+
+			console.log( buffer );
+
+		},
+	};
+
+
 	scene.background = new THREE.Color( "#FFFFFF" );
 
 	await initMoonDEMData();
-	const uniforms = initUniforms();
+	const [ uniforms, gui ] = initUniforms();
+
+	gui.add( obj, "myFunction" ); // button
+
 
 	window.addEventListener( "resize", () => {
 

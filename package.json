@@ -37,6 +37,7 @@
     "array-normalize": "^2.0.0",
     "core-js": "^2.6.11",
     "fast-max": "^0.4.0",
+    "file-saver": "^2.0.5",
     "geotiff": "^2.0.7",
     "geotiff-geokeys-to-proj4": "^2022.9.7",
     "lil-gui": "^0.18.1",
