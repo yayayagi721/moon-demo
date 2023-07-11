@@ -5,6 +5,7 @@ import { getNormedHightPxByLatLng } from "./demRepository";
 import { pointToCoordinate } from "./coordinateHelper";
 import fragmentShader from "./shader/fragmentShader.glsl";
 import vertexShader from "./shader/vertexShader.glsl";
+import { log } from "geotiff/dist-node/logging";
 
 const DIRECTION = {
 	UP: new THREE.Vector3( 0, 1, 0 ),
@@ -20,6 +21,12 @@ const vectorDirection = ( direction ) => {
 	return new THREE.Vector3().copy( DIRECTION[ direction ] );
 
 };
+
+const MOON_CONST = {
+	radiusMeter: 1737.4,
+	onePerMeter: 0.5,
+};
+
 
 export class Planet {
 
@@ -41,21 +48,22 @@ export class Planet {
 
 	}
 
-	public async applyHeight( point: THREE.Vector3 ) {
 
-		const coord = pointToCoordinate( point );
+	private applyHeight( pxData ) {
 
-		const height = getNormedHightPxByLatLng( coord ) * 0.000004;
-		const v = new THREE.Vector3().copy( point ).multiplyScalar( height );
+		const meterLength = 1 / MOON_CONST.radiusMeter;
+		const pxMeter = pxData * MOON_CONST.onePerMeter * meterLength;
 
-		return new THREE.Vector3().copy( point ).add( v );
+		return pxMeter;
 
 	}
 
 	getHeight( point: THREE.Vector3 ) {
 
 		const coord = pointToCoordinate( point );
-		const height = getNormedHightPxByLatLng( coord );
+		const pxData = getNormedHightPxByLatLng( coord );
+		const height = this.applyHeight( pxData );
+
 		return height;
 
 	}
@@ -74,6 +82,9 @@ export class Planet {
 				return this.getHeight( vector );
 
 			} );
+			const maxHeight = Math.max( ...demArray );
+
+			( <any> uniforms ).uMaxHeight.value = maxHeight;
 
 			const normalizeHeight = new Float32Array( demArray );
 
@@ -105,3 +116,4 @@ export class Planet {
 	}
 
 }
+
