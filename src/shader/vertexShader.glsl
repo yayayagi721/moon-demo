@@ -1,6 +1,9 @@
 attribute float height;
 uniform float uHeightCoefficient;
+uniform vec2 uMouse;
+
 varying float vHeight;
+varying float vRatio;
 
 void main(){
     vec3 heightVector=normal*height*uHeightCoefficient;
@@ -10,4 +13,5 @@ void main(){
     gl_Position=projectionMatrix*mvPosition;
     
     vHeight=height;
+    vRatio=uMouse.y*2.0;
 }

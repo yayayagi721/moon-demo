@@ -48,7 +48,6 @@ export class Planet {
 
 	}
 
-
 	private applyHeight( pxData ) {
 
 		const meterLength = 1 / MOON_CONST.radiusMeter;

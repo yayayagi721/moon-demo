@@ -8,9 +8,9 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { Planet } from "./planet";
 
-const initUniforms = () => {
+const initHeightSurfaceUniform = ( gui ) => {
 
-	const gui = new dat.GUI( { width: 300 } );
+	const heightFolder = gui.addFolder( 'HeightSurface' );
 
 	const colors = {
 		depthColor: "#000000",
@@ -25,36 +25,114 @@ const initUniforms = () => {
 		uHeightCoefficient: { value: 150 },
 		uMaxHeight: { value: 1 },
 		uMinHeight: { value: 1 },
+		uMouse: {
+			value: new THREE.Vector2(),
+		},
 	};
 
-	gui
+	document.onmousemove = function ( e ) {
+
+		uniforms.uMouse.value.x = e.pageX / window.innerWidth;
+		uniforms.uMouse.value.y = e.pageY / window.innerHeight;
+
+	};
+
+	heightFolder
 		.add( uniforms.uColorOffset, "value" )
 		.min( 0 )
 		.max( 1 )
 		.step( 0.001 )
 		.name( "uColorOffset" );
 
-	gui
+	heightFolder
 		.add( uniforms.uColorMultiplier, "value" )
 		.min( 0 )
 		.max( 10000 )
 		.step( 0.001 )
 		.name( "uColorMultiplier" );
 
-	gui
+	heightFolder
 		.add( uniforms.uHeightCoefficient, "value" )
 		.min( 0 )
 		.max( 400 )
 		.step( 0.001 )
 		.name( "uHeightCoefficient" );
 
-	gui.addColor( colors, "depthColor" ).onChange( () => {
+	heightFolder.addColor( colors, "depthColor" ).onChange( () => {
 
 		uniforms.uDepthColor.value.set( colors.depthColor );
 
 	} );
 
-	gui.addColor( colors, "surfaceColor" ).onChange( () => {
+	heightFolder.addColor( colors, "surfaceColor" ).onChange( () => {
+
+		uniforms.uSurfaceColor.value.set( colors.surfaceColor );
+
+	} );
+
+	gui.show( true );
+
+	return uniforms;
+
+};
+
+const initUniforms = ( gui ) => {
+
+	const heightFolder = gui.addFolder( 'HeightSurface' );
+
+	const colors = {
+		depthColor: "#000000",
+		surfaceColor: "#cfe1ec",
+	};
+
+	const uniforms = {
+		uDepthColor: { value: new THREE.Color( colors.depthColor ) },
+		uSurfaceColor: { value: new THREE.Color( colors.surfaceColor ) },
+		uColorOffset: { value: 0.03 },
+		uColorMultiplier: { value: 9.0 },
+		uHeightCoefficient: { value: 150 },
+		uMaxHeight: { value: 1 },
+		uMinHeight: { value: 1 },
+		uMouse: {
+			value: new THREE.Vector2(),
+		},
+	};
+
+	document.onmousemove = function ( e ) {
+
+		uniforms.uMouse.value.x = e.pageX / window.innerWidth;
+		uniforms.uMouse.value.y = e.pageY / window.innerHeight;
+
+	};
+
+	heightFolder
+		.add( uniforms.uColorOffset, "value" )
+		.min( 0 )
+		.max( 1 )
+		.step( 0.001 )
+		.name( "uColorOffset" );
+
+	heightFolder
+		.add( uniforms.uColorMultiplier, "value" )
+		.min( 0 )
+		.max( 10000 )
+		.step( 0.001 )
+		.name( "uColorMultiplier" );
+
+	heightFolder
+		.add( uniforms.uHeightCoefficient, "value" )
+		.min( 0 )
+		.max( 400 )
+		.step( 0.001 )
+		.name( "uHeightCoefficient" );
+
+	heightFolder.addColor( colors, "depthColor" ).onChange( () => {
+
+		uniforms.uDepthColor.value.set( colors.depthColor );
+
+	} );
+
+	heightFolder.addColor( colors, "surfaceColor" ).onChange( () => {
 
 		uniforms.uSurfaceColor.value.set( colors.surfaceColor );
 
@@ -67,6 +145,15 @@ const initUniforms = () => {
 };
 
 const main = async () => {
+
+	await initMoonDEMData();
+
+
+	const gui = new dat.GUI( { width: 300 } );
+
+	gui.show( true );
+
+	const heightSurfaceUniforms = initHeightSurfaceUniform( gui );
 
 	const moonResolution = 300;
 
@@ -97,9 +184,6 @@ const main = async () => {
 
 	scene.background = new THREE.Color( "#FFFFFF" );
 
-	await initMoonDEMData();
-	const uniforms = initUniforms();
-
 	window.addEventListener( "resize", () => {
 
 		sizes.width = window.innerWidth;
@@ -114,7 +198,7 @@ const main = async () => {
 	} );
 
 	const planet = new Planet( moonResolution );
-	const meshes = await planet.initialize( uniforms );
+	const meshes = await planet.initialize( heightSurfaceUniforms );
 
 	meshes.forEach( ( mesh ) => {
 
