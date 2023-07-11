@@ -22,7 +22,9 @@ const initUniforms = () => {
 		uSurfaceColor: { value: new THREE.Color( colors.surfaceColor ) },
 		uColorOffset: { value: 0.03 },
 		uColorMultiplier: { value: 9.0 },
-		uHeightCoefficient: { value: 0.15 },
+		uHeightCoefficient: { value: 150 },
+		uMaxHeight: { value: 1 },
+		uMinHeight: { value: 1 },
 	};
 
 	gui
@@ -35,16 +37,16 @@ const initUniforms = () => {
 	gui
 		.add( uniforms.uColorMultiplier, "value" )
 		.min( 0 )
-		.max( 10 )
+		.max( 10000 )
 		.step( 0.001 )
 		.name( "uColorMultiplier" );
 
 	gui
 		.add( uniforms.uHeightCoefficient, "value" )
 		.min( 0 )
-		.max( 2 )
+		.max( 400 )
 		.step( 0.001 )
-		.name( "uColorMultiplier" );
+		.name( "uHeightCoefficient" );
 
 	gui.addColor( colors, "depthColor" ).onChange( () => {
 
@@ -65,6 +67,8 @@ const initUniforms = () => {
 };
 
 const main = async () => {
+
+	const moonResolution = 300;
 
 	const sizes = {
 		width: window.innerWidth,
@@ -109,7 +113,7 @@ const main = async () => {
 
 	} );
 
-	const planet = new Planet( 100 );
+	const planet = new Planet( moonResolution );
 	const meshes = await planet.initialize( uniforms );
 
 	meshes.forEach( ( mesh ) => {
